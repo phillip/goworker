@@ -21,6 +21,10 @@ func (r *RedisConn) Close() {
 	_ = r.Conn.Close()
 }
 
+func (r *RedisConn) Bool(reply interface{}, err error) (bool, error) {
+	return redis.Bool(reply, err)
+}
+
 func newRedisFactory(uri string) pools.Factory {
 	return func() (pools.Resource, error) {
 		return redisConnFromURI(uri)

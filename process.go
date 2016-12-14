@@ -47,6 +47,7 @@ func (p *process) close(conn *RedisConn) error {
 	conn.Send("SREM", fmt.Sprintf("%sworkers", workerSettings.Namespace), p)
 	conn.Send("DEL", fmt.Sprintf("%sstat:processed:%s", workerSettings.Namespace, p))
 	conn.Send("DEL", fmt.Sprintf("%sstat:failed:%s", workerSettings.Namespace, p))
+	conn.Send("DEL", fmt.Sprintf("%sworker:%s:shutdown", workerSettings.Namespace, p))
 	conn.Flush()
 
 	return nil

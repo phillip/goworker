@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"syscall"
 )
 
 type poller struct {
@@ -21,6 +22,24 @@ func newPoller(queues []string, isStrict bool) (*poller, error) {
 		process:  *process,
 		isStrict: isStrict,
 	}, nil
+}
+
+func (p *poller) checkRemoteShutdown() {
+	conn, err := GetConn()
+	if err != nil {
+		logger.Criticalf("Error on getting connection in poller %s", p)
+		return
+	}
+	defer PutConn(conn)
+
+	exists, err := conn.Bool(conn.Do("EXISTS", fmt.Sprintf("%sworker:%s:shutdown", workerSettings.Namespace, p)))
+	if err != nil {
+		logger.Criticalf("Error on checking shutdown key %s", p)
+		return
+	}
+	if exists {
+		syscall.Kill(syscall.Getppid(), syscall.SIGQUIT)
+	}
 }
 
 func (p *poller) getJob(conn *RedisConn) (*Job, error) {
@@ -81,6 +100,7 @@ func (p *poller) poll(interval time.Duration, quit <-chan bool) <-chan *Job {
 		}()
 
 		for {
+			p.checkRemoteShutdown()
 			select {
 			case <-quit:
 				return
