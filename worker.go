@@ -123,6 +123,21 @@ func (w *worker) work(jobs <-chan *Job, monitor *sync.WaitGroup) {
 			}
 		}
 	}()
+
+	go func() {
+		for true {
+			conn, err := GetConn()
+			if err != nil {
+				logger.Criticalf("Error on getting connection in heartbeat %v", w)
+				return
+			} else {
+				conn.Send("HSET", fmt.Sprintf("%sworkers:heartbeat", workerSettings.Namespace), w.process.String(), time.Now().UTC().Format("2006-01-02T15:04:05-0700"))
+				conn.Flush()
+				PutConn(conn)
+			}
+			time.Sleep(time.Minute)
+		}
+	}()
 }
 
 func (w *worker) run(job *Job, workerFunc workerFunc) {
