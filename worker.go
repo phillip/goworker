@@ -48,7 +48,7 @@ func (w *worker) fail(conn *RedisConn, job *Job, err error) error {
 	failure := &failure{
 		FailedAt:  time.Now(),
 		Payload:   job.Payload,
-		Exception: "DirtyExit",
+		Exception: "Resque::DirtyExit",
 		Error:     err.Error(),
 		Worker:    w,
 		Queue:     job.Queue,
